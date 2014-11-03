@@ -16,12 +16,28 @@ const uint8_t ARDUINO_WRITE_CHARACTERISTIC_UUID[LENGTH_OF_LONG_UUID] = {
     0x91, 0xae, 0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b
 };
 
+const uint8_t RFID_UUID[LENGTH_OF_LONG_UUID] = {
+    0x7a, 0x77, 0xbe, 0x20, 0x5a, 0x0d, 0x11, 0xe4,
+    0xa9, 0x5e, 0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b
+};
+ 
 const uint8_t TEST_SERVICE_UUID[LENGTH_OF_LONG_UUID] = {
     0xb0, 0xbb, 0x58, 0x20, 0x5a, 0x0d, 0x11, 0xe4,
     0x93, 0xee, 0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b};
 
 const static char DEVICE_NAME[] = "mediCAL BLE";        // For Advertisement    
 static volatile uint16_t writeToArduino_handler;        // handler to echo data
+static volatile bool is_button_pressed = false;
+uint8_t RFID_Tag_Read[4];
+
+// Button pressed routine
+void button1Pressed() {
+    RFID_Tag_Read[0] = 0xAB;   
+    RFID_Tag_Read[1] = 0xCD;
+    RFID_Tag_Read[2] = 0xEF;
+    RFID_Tag_Read[3] = 0xAB;
+    is_button_pressed = true;
+}
 
 // What happens on connect event - DEBUG purposes ONLY!!
 void onConnection(Gap::Handle_t handle, const Gap::ConnectionParams_t * param_ptr){
@@ -51,7 +67,13 @@ void onDatawritten(const GattCharacteristicWriteCBParams *eventDataP) {
 int main(void)
 {
     arduino.printf("Entered main\n\r");
-
+    
+    // RFID Interrupt initialization
+    // button initialization
+    InterruptIn button1(BUTTON1);
+    button1.mode(PullUp);
+    button1.rise(&button1Pressed);
+    
     // You can write from the phone to control what is written to Arduino
     GattCharacteristic writeToArduino_characteristics(
         ARDUINO_WRITE_CHARACTERISTIC_UUID, NULL, sizeof(int16_t), sizeof(int16_t),
@@ -60,7 +82,14 @@ int main(void)
         GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE);                                // and write properties
     writeToArduino_handler = writeToArduino_characteristics.getValueAttribute().getHandle();// save the handler
 
-    GattCharacteristic *charTable[] = {&writeToArduino_characteristics};                    // Characteristic table
+    GattCharacteristic RFID_characteristics(
+        RFID_UUID, NULL, sizeof(uint32_t), sizeof(uint32_t),
+        GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | 
+        GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY);
+
+
+    GattCharacteristic *charTable[] = {&writeToArduino_characteristics, 
+                                                &RFID_characteristics};                    // Characteristic table
     GattService testService(TEST_SERVICE_UUID, charTable,                                   // Add the char(s) to this service
                             sizeof(charTable) / sizeof(GattCharacteristic *));
 
@@ -82,7 +111,15 @@ int main(void)
     ble.startAdvertising();
 
     while (true) {
+        if (is_button_pressed) {
+            // if button pressed, we update the characteristics
+            is_button_pressed = false;
+            ble.updateCharacteristicValue(RFID_characteristics.getValueAttribute().getHandle(),
+                                          RFID_Tag_Read, sizeof(RFID_Tag_Read));
+        } 
+        else {
             arduino.printf("Waiting for ble Event\n\r");
-            ble.waitForEvent();
+            ble.waitForEvent();        
+            }
     }
 }
