@@ -23,8 +23,15 @@ const uint8_t TEST_SERVICE_UUID[LENGTH_OF_LONG_UUID] = {
 const static char DEVICE_NAME[] = "mediCAL BLE";        // For Advertisement    
 static volatile uint16_t writeToArduino_handler;        // handler to echo data
 
+// What happens on connect event - DEBUG purposes ONLY!!
+void onConnection(Gap::Handle_t handle, const Gap::ConnectionParams_t * param_ptr){
+    arduino.printf("Connection Event!\n\r");
+    ble.stopAdvertising(); // stop advertising
+}
+
 // What happens on disconnect event
 void disconnectionCallback(Gap::Handle_t handle, Gap::DisconnectionReason_t reason){
+    arduino.printf("Disconnection Event!\n\r");
     ble.startAdvertising(); // restart advertising
 }
 
@@ -48,7 +55,7 @@ int main(void)
     // You can write from the phone to control what is written to Arduino
     GattCharacteristic writeToArduino_characteristics(
         ARDUINO_WRITE_CHARACTERISTIC_UUID, NULL, sizeof(int16_t), sizeof(int16_t),
-        GattCharacteristic::BLE_GATT_FORMAT_SINT16 |                                        //16bit signed INT
+        GattCharacteristic::BLE_GATT_FORMAT_SINT16 |                                        // 16-bit signed int
         GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ |                                 // has read
         GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_WRITE);                                // and write properties
     writeToArduino_handler = writeToArduino_characteristics.getValueAttribute().getHandle();// save the handler
@@ -60,7 +67,8 @@ int main(void)
     // BLE setup, mainly we add service and callbacks
     ble.init();
     ble.addService(testService);
-    ble.onDataWritten(&onDatawritten);
+    ble.onDataWritten(onDatawritten);
+    ble.onConnection(onConnection);
     ble.onDisconnection(disconnectionCallback);
     
     // setup advertising
@@ -69,7 +77,8 @@ int main(void)
     ble.accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME,
                                      (uint8_t *)DEVICE_NAME, sizeof(DEVICE_NAME));
     ble.setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
-    ble.setAdvertisingInterval(1600); /* 1000ms; in multiples of 0.625ms. */
+    ble.setAdvertisingInterval(160); /* 100ms; in multiples of 0.625ms. */
+    arduino.printf("Start Advertising\n\r");
     ble.startAdvertising();
 
     while (true) {
