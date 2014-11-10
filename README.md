@@ -12,6 +12,6 @@ This project is being developed as a part of the Interactive Device Design (Fall
 See: https://github.com/defond0/mediCal for the Android app used to control this hardware
 
 Fun links:
-Project StoryBoard: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/ObservationStoryboard-Group:MediCAL
-Prototype 1: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/P3-mediCAL#Team_mediCAL
-Prototype 1.1: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/Homework5-mediCAL
+* Project StoryBoard: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/ObservationStoryboard-Group:MediCAL
+* Prototype 1: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/P3-mediCAL#Team_mediCAL
+* Prototype 1.1: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/Homework5-mediCAL
