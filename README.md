@@ -1,5 +1,5 @@
-======
-mediCAL
+mediCal's Pillar - Your Personal Pill Assistant
+=======
 
 This repository contains the mBED proejct for providing hardware support to PILLAR (automatic pill dispenser) by team mediCAL.
 
@@ -10,4 +10,3 @@ This project is being developed as a part of the Interactive Device Design (Fall
 - Stepper and RFID code is in the readMifare_Stepper folder: An arduino is used alongside the PN532 NFC reader and a L293D H-bridge motor driver to achieve functionality. This project is based on Adafruit's MiFare Arduino library/example and stepper code from here (https://learn.adafruit.com/adafruit-arduino-lesson-16-stepper-motors?view=all)
 
 See: https://github.com/defond0/mediCal for the Android app used to control this hardware
-=======
