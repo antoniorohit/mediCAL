@@ -10,3 +10,8 @@ This project is being developed as a part of the Interactive Device Design (Fall
 - Stepper and RFID code is in the readMifare_Stepper folder: An arduino is used alongside the PN532 NFC reader and a L293D H-bridge motor driver to achieve functionality. This project is based on Adafruit's MiFare Arduino library/example and stepper code from here (https://learn.adafruit.com/adafruit-arduino-lesson-16-stepper-motors?view=all)
 
 See: https://github.com/defond0/mediCal for the Android app used to control this hardware
+
+Fun links:
+Project StoryBoard: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/ObservationStoryboard-Group:MediCAL
+Prototype 1: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/P3-mediCAL#Team_mediCAL
+Prototype 1.1: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/Homework5-mediCAL
