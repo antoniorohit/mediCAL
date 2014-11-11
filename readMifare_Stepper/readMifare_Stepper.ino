@@ -90,7 +90,12 @@ void loop(void) {
   
   /* If a tag is read successfully, send out the UID to the RF board */
   if (success) {
-    nfc.PrintHex(uid, uidLength);  // print it on serial
+    //nfc.PrintHex(uid, uidLength);  // print it on serial
+    for(int i=0; i< uidLength; i++){
+      Serial.print('|');
+      Serial.print(uid[i], DEC);
+    }
+    Serial.print(";");
     // but for now, also send it using the hack method
     if(isEqual(uid, circle_tag, uidLength)){
         digitalWrite(RFID1, 1);
@@ -110,6 +115,7 @@ void loop(void) {
   if (Serial.available())
   {
     int steps = Serial.parseInt();
+    if (Serial.read()=='}')
     motor.step(steps);
   }
   

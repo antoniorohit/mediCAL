@@ -6,8 +6,9 @@
 #include "BLEDevice.h"
 
 DigitalOut led1(LED1);
+DigitalOut led2(LED2);
 BLEDevice  ble;                 // Declare the ble device
-Serial arduino(USBTX, USBRX);   // serial interface to PC or Arduino controlling the stepper (and debug prints)
+Serial arduino(USBTX, USBRX);   // serial interface to PC or Arduino controlling the stepper
 
 // Arbit 128-bit UIDs generated from 
 // http://www.guidgenerator.com/online-guid-generator.aspx
@@ -28,28 +29,9 @@ const uint8_t TEST_SERVICE_UUID[LENGTH_OF_LONG_UUID] = {
 
 const static char DEVICE_NAME[] = "mediCAL BLE";        // For Advertisement    
 static volatile uint16_t writeToArduino_handler;        // handler to echo data
-static volatile bool is_button_pressed = false;
-uint8_t RFID_Tag_Read[4];
 
-// Button1 pressed routine - emulates 'true' RFID UID read
-void button1Pressed() {
-    RFID_Tag_Read[0] = 0xAB;   
-    RFID_Tag_Read[1] = 0xCD;
-    RFID_Tag_Read[2] = 0xEF;
-    RFID_Tag_Read[3] = 0x00;
-    is_button_pressed = true;
-    arduino.printf("Button 1 Pressed!\n\r");
-}
+static volatile bool uid_4, uid_7 = false;
 
-// Button2 pressed routine - emulates 'true' RFID UID read
-void button2Pressed() {
-    RFID_Tag_Read[0] = 0x12;   
-    RFID_Tag_Read[1] = 0x34;
-    RFID_Tag_Read[2] = 0x56;
-    RFID_Tag_Read[3] = 0x78;
-    is_button_pressed = true;
-    arduino.printf("Button 2 Pressed!\n\r");
-}
 
 // What happens on connect event - DEBUG purposes ONLY!!
 void onConnection(Gap::Handle_t handle, const Gap::ConnectionParams_t * param_ptr){
@@ -66,31 +48,54 @@ void disconnectionCallback(Gap::Handle_t handle, Gap::DisconnectionReason_t reas
 
 // This function is called whenever data is written to the BLE device through the phone
 void onDatawritten(const GattCharacteristicWriteCBParams *eventDataP) {
-    arduino.printf("Enter onDataWritten\n\r");
     // eventDataP->charHandle is just uint16_t
     // it's used to dispatch the callbacks
     if(eventDataP->charHandle==writeToArduino_handler){         // The data is for the motor
-        arduino.printf("Got some Arduino-specific info!\n\r");
         uint16_t bytesRead = eventDataP->len;
         int turnSteps = *((int16_t *)eventDataP->data);
-        arduino.printf("%i\n\r", turnSteps); 
+        arduino.printf("%i}\n\r", turnSteps); 
         led1 = !led1.read();
     }
+}
+char read_ch;
+uint8_t buff[30] = {0};
+uint8_t ct = 0;
+
+void callback() {
+    // Note: you need to actually read from the serial to clear the RX interrupt
+    read_ch = arduino.getc();
+    buff[ct] = read_ch;
+    ct++;
+    if((ct > 27) || (read_ch == ';')){
+        if(ct>20){
+            uid_7 = true;
+        }
+        else{
+            uid_4 = true;
+        }
+        for(int i=0; i<ct; i++){
+            arduino.printf("%c", (char)buff[i]);
+        }
+        arduino.printf("\n\r");
+        ct = 0;
+
+    }
+    led2 = !led2;
 }
 
 int main(void)
 {
     arduino.printf("Entered main\n\r");
-    
+    led2 = 0;
     // RFID Interrupt initialization
     // button initialization
     InterruptIn button1(BUTTON1);
     button1.mode(PullUp);
-    button1.rise(&button1Pressed);
 
     InterruptIn button2(BUTTON2);
     button2.mode(PullUp);
-    button2.rise(&button2Pressed);
+
+    arduino.attach(&callback);
 
     
     // You can write from the phone to control what is written to Arduino
@@ -102,7 +107,7 @@ int main(void)
     writeToArduino_handler = writeToArduino_characteristics.getValueAttribute().getHandle();// save the handler
 
     GattCharacteristic RFID_characteristics(
-        RFID_UUID, NULL, sizeof(uint32_t), sizeof(uint32_t),
+        RFID_UUID, NULL, 30*sizeof(uint8_t), 30*sizeof(uint8_t),
         GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_READ | 
         GattCharacteristic::BLE_GATT_CHAR_PROPERTIES_NOTIFY);
 
@@ -126,20 +131,24 @@ int main(void)
                                      (uint8_t *)DEVICE_NAME, sizeof(DEVICE_NAME));
     ble.setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
     ble.setAdvertisingInterval(160); /* 100ms; in multiples of 0.625ms. */
-    arduino.printf("Start Advertising\n\r");
     ble.startAdvertising();
 
     while (true) {
-        if (is_button_pressed) {
-            // if button pressed, we update the characteristics
-            is_button_pressed = false;
-            ble.updateCharacteristicValue(RFID_characteristics.getValueAttribute().getHandle(),
-                                          RFID_Tag_Read, sizeof(RFID_Tag_Read));
-          arduino.printf("Characteristic Updated!\n\r");
+        if (uid_4||uid_7) {
+            if(uid_4){
+                // if button pressed, we update the characteristics
+                uid_4 = false;
+                ble.updateCharacteristicValue(RFID_characteristics.getValueAttribute().getHandle(),
+                                          buff, 15*sizeof(uint8_t));
+            }
+            else{
+                uid_7 = false;
+                ble.updateCharacteristicValue(RFID_characteristics.getValueAttribute().getHandle(),
+                                              buff, 26*sizeof(uint8_t));
+            }
         } 
         else {
-            arduino.printf("Waiting for ble Event\n\r");
             ble.waitForEvent();        
-            }
+        }
     }
 }
