@@ -18,7 +18,7 @@ int in2Pin = 11;
 int in3Pin = 10;
 int in4Pin = 9;
 
-Stepper motor(512, in1Pin, in2Pin, in3Pin, in4Pin);  
+Stepper smallMotor(512, in1Pin, in2Pin, in3Pin, in4Pin);  
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
@@ -27,7 +27,7 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 
 // Connect a stepper motor with 200 steps per revolution (1.8 degree)
 // to motor port #2 (M3 and M4)
-Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 2);
+Adafruit_StepperMotor *bigMotor = AFMS.getStepper(200, 2);
 
 
 void setup() {
@@ -37,12 +37,11 @@ void setup() {
   pinMode(in4Pin, OUTPUT);
   
   Serial.begin(9600);
-  motor.setSpeed(20);
+  smallMotor.setSpeed(30);
+  bigMotor->setSpeed(40);  // 40 rpm   
 
   AFMS.begin();  // create with the default frequency 1.6KHz
-  //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
-  
-  myMotor->setSpeed(10);  // 10 rpm   
+  //AFMS.begin(1000);  // OR with a different frequency, say 1KHz  
 }
 
 
@@ -51,21 +50,31 @@ void loop()
   if (Serial.available())
   {
     int steps = Serial.parseInt();
-    motor.step(steps);
-  }
-  Serial.println("Single coil steps");
-  myMotor->step(100, FORWARD, SINGLE); 
-  myMotor->step(100, BACKWARD, SINGLE); 
+    if(Serial.read() == 'm'){
+      Serial.println("SM: Normal steps");
+      smallMotor.step(steps);
+    }
+    else{
+      Serial.println("BM: Single coil steps");
+      if(steps > 0){
+        bigMotor->step(steps, FORWARD, SINGLE); 
+      }
+      else{
+        bigMotor->step(-steps, BACKWARD, SINGLE); 
+      }
+//
+//  Serial.println("Double coil steps");
+//  bigMotor->step(100, FORWARD, DOUBLE); 
+//  bigMotor->step(100, BACKWARD, DOUBLE);
+//  
+//  Serial.println("Interleave coil steps");
+//  bigMotor->step(100, FORWARD, INTERLEAVE); 
+//  bigMotor->step(100, BACKWARD, INTERLEAVE); 
+//  
+//  Serial.println("Microstep steps");
+//  bigMotor->step(50, FORWARD, MICROSTEP); 
+//  bigMotor->step(50, BACKWARD, MICROSTEP);
 
-  Serial.println("Double coil steps");
-  myMotor->step(100, FORWARD, DOUBLE); 
-  myMotor->step(100, BACKWARD, DOUBLE);
-  
-  Serial.println("Interleave coil steps");
-  myMotor->step(100, FORWARD, INTERLEAVE); 
-  myMotor->step(100, BACKWARD, INTERLEAVE); 
-  
-  Serial.println("Microstep steps");
-  myMotor->step(50, FORWARD, MICROSTEP); 
-  myMotor->step(50, BACKWARD, MICROSTEP);
+    }
+  }
 }
