@@ -116,8 +116,8 @@ void loop()
     }
     else if(readChar == 'M'){
       Serial.println("BM: Single coil steps");
+      jerkMotor(bigMotor);
       if(steps > 0){
-        jerkMotor(bigMotor);
         bigMotor->step(steps, FORWARD, INTERLEAVE); 
       }
       else{
@@ -158,6 +158,5 @@ void jerkMotor(Adafruit_StepperMotor *motor)
   motor->step(steps, FORWARD, DOUBLE); 
   motor->step(steps, BACKWARD, DOUBLE);
   motor->setSpeed(40);  // 50 rpm   
-
 }
 
