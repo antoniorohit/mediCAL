@@ -66,6 +66,7 @@ void setup() {
   }
   // configure board to read RFID tags
   nfc.SAMConfig();
+  Serial.print("Success");
 
 }
 
@@ -75,7 +76,7 @@ void loop()
   uint8_t success;
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
   uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
-
+  char readChar;
   // Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
   // 'uid' will be populated with the UID, and uidLength will indicate
   // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
@@ -108,17 +109,19 @@ void loop()
   if (Serial.available())
   {
     int steps = Serial.parseInt();
-    if(Serial.read() == 'm'){
+    readChar = Serial.read();
+    if(readChar == 'm'){
       Serial.println("SM: Normal steps");
       smallMotor.step(steps);
     }
-    else{
+    else if(readChar == 'M'){
       Serial.println("BM: Single coil steps");
       if(steps > 0){
-        bigMotor->step(steps, FORWARD, SINGLE); 
+        jerkMotor(bigMotor);
+        bigMotor->step(steps, FORWARD, INTERLEAVE); 
       }
       else{
-        bigMotor->step(-steps, BACKWARD, SINGLE); 
+        bigMotor->step(-steps, BACKWARD, INTERLEAVE); 
       }
 
     }
@@ -137,3 +140,24 @@ boolean isEqual(uint8_t *ID1, uint8_t *ID2, uint8_t length)
   }
   return res;
 }
+
+void jerkMotor(Adafruit_StepperMotor *motor)
+{
+  int steps = 4;
+  motor->setSpeed(100);  // 100 rpm   
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->setSpeed(40);  // 50 rpm   
+
+}
+
