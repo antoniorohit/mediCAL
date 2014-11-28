@@ -53,13 +53,47 @@ void onDatawritten(const GattCharacteristicWriteCBParams *eventDataP) {
     // it's used to dispatch the callbacks
     if(eventDataP->charHandle==writeToArduino_handler){         // The data is for the motor
         uint16_t bytesRead = eventDataP->len;
-        int turnSteps = *((int16_t *)eventDataP->data);
-        if(is_button_pressed){                                  // Hack-way to turn both motors
-            arduino.printf("%im\n", turnSteps);                 // <turn steps>m turns small motor          
-        }
-        else{
-            arduino.printf("%iM\n", turnSteps);                 // <turn steps>M turns large motor
-        }
+        // What the BLE master will tell us is which funnels to dispense from
+        int funnel = *((int16_t *)eventDataP->data);
+        switch(funnel){
+            case 0:
+                arduino.printf("%dm", 0);                
+                arduino.printf("%dM", 25);                          
+                arduino.printf("%dM", -25);                
+                arduino.printf("%dm", 128);                
+                arduino.printf("%dm", -128);                
+                arduino.printf("%dm", -0);                
+                break;
+            case 1:
+                arduino.printf("%dm", 128);                
+                arduino.printf("%dM", 75);                          
+                arduino.printf("%dM", -75);                
+                arduino.printf("%dm", 128);                
+                arduino.printf("%dm", -128);                
+                arduino.printf("%dm", -128);               
+                break;        
+            case 2:
+                arduino.printf("%dm", 256);                
+                arduino.printf("%dM", 125);                          
+                arduino.printf("%dM", -125);                
+                arduino.printf("%dm", 128);                
+                arduino.printf("%dm", -128);                
+                arduino.printf("%dm", -256);                
+                break;      
+            
+            case 3:
+                arduino.printf("%dm", 384);                
+                arduino.printf("%dM", 175);                          
+                arduino.printf("%dM", -175);                
+                arduino.printf("%dm", 128);                
+                arduino.printf("%dm", -128);                
+                arduino.printf("%dm", -384);                
+                break;      
+
+            default:
+                break;    
+            }
+
         led1 = !led1.read();                                    // debug purposes
     }
 }
