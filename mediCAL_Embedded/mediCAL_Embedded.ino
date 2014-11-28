@@ -18,6 +18,8 @@ Adafruit_PN532 nfc(SCK, MISO, MOSI, SS);
 /* RFID UIDs - known previously */
 uint8_t circle_tag[] = {0x1A, 0xE2, 0x41, 0xD9};
 uint8_t bart_tag[] = {0x04, 0x92, 0x6E, 0x7A, 0x7A, 0x31, 0x80};
+uint8_t orca_tag[] = {0x04, 0x41, 0x18, 0x7A, 0x3D, 0x22, 0x80};
+uint8_t simple_rect_tag[] = {0xAA, 0x79, 0x9B, 0x23};
 
 // Pins for the small stepper motor
 int in1Pin = 12;
@@ -86,23 +88,15 @@ void loop()
   if (success) {
     //nfc.PrintHex(uid, uidLength);  // print it on serial
     for(int i=0; i< uidLength; i++){
-      Serial.print('|');
-      Serial.print(uid[i], DEC);
+//      Serial.write('|');
+      Serial.write(char(uid[i]));      
     }
-    Serial.print(";");
-    // but for now, also send it using the hack method
-    if(isEqual(uid, circle_tag, uidLength)){
-        digitalWrite(RFID1, 1);
-        digitalWrite(RFID2, 0);
+    if(uidLength < 7){
+      Serial.write(0);
+      Serial.write(0);
+      Serial.write(0);
     }
-    else if(isEqual(uid, bart_tag, uidLength)){
-        digitalWrite(RFID1, 0);
-        digitalWrite(RFID2, 1);
-    }
-    else{
-        digitalWrite(RFID1, 0);
-        digitalWrite(RFID2, 0);
-    }
+    Serial.write(';');
   }
 
 
