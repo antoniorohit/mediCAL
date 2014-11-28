@@ -4,7 +4,7 @@
 // controlled by an Arduino
 #include "mbed.h"
 #include "BLEDevice.h"
-#define RFID_BUFF_SIZE  8
+#define RFID_BUFF_SIZE  8       // Enough to hold 7-byte UID + delimiter
 
 DigitalOut led1(LED1);          // LED toggled on connect and write events
 DigitalOut led2(LED2);          // Toggled on button press
@@ -54,39 +54,39 @@ void onDatawritten(const GattCharacteristicWriteCBParams *eventDataP) {
     if(eventDataP->charHandle==writeToArduino_handler){         // The data is for the motor
         uint16_t bytesRead = eventDataP->len;
         int turnSteps = *((int16_t *)eventDataP->data);
-        if(is_button_pressed){
-            arduino.printf("%im\n", turnSteps); 
+        if(is_button_pressed){                                  // Hack-way to turn both motors
+            arduino.printf("%im\n", turnSteps);                 // <turn steps>m turns small motor          
         }
         else{
-            arduino.printf("%iM\n", turnSteps); 
+            arduino.printf("%iM\n", turnSteps);                 // <turn steps>M turns large motor
         }
-        led1 = !led1.read();
+        led1 = !led1.read();                                    // debug purposes
     }
 }
-char read_ch;
+char read_ch;                                   // temp var to store data from arduino
 uint8_t buff[RFID_BUFF_SIZE] = {0};             // max packet size for GATT is 20 bytes
 uint8_t ct = 0;
 
 void callback() {
     // Note: you need to actually read from the serial to clear the RX interrupt
     read_ch = arduino.getc();
-    buff[ct] = int(read_ch);
-    ct++;
-    if((ct > RFID_BUFF_SIZE-1)){
+    buff[ct++] = int(read_ch);
+    
+    if((ct > RFID_BUFF_SIZE-1)){                // Arduino sends 8-bytes [UID][;][0 padding]
         uid_read = true;
     }
-    led2 = !led2.read();
+    led2 = !led2.read();                        // debug purposes
 }
 
 // Button1 pressed routine - toggle is_button pressed
 void button1Pressed() {
     is_button_pressed = !is_button_pressed;
-    led2 = !led2.read();
+    led2 = !led2.read();                        // debug
 }
 
 // Button2 pressed routine 
 void button2Pressed() {
-    led2 = !led2.read();
+    led2 = !led2.read();                        // debug
 }
 
 int main(void)
@@ -104,8 +104,8 @@ int main(void)
     button2.mode(PullUp);
     button2.rise(&button2Pressed);
 
-    arduino.attach(&callback);
-    
+    arduino.attach(&callback);                  // callback is triggered when there is incoming serial data
+        
     // You can write from the phone to control what is written to Arduino
     GattCharacteristic writeToArduino_characteristics(
         ARDUINO_WRITE_CHARACTERISTIC_UUID, NULL, sizeof(int16_t), sizeof(int16_t),
@@ -147,7 +147,6 @@ int main(void)
                                       buff, RFID_BUFF_SIZE*sizeof(uint8_t));
             uid_read = false;
             ct = 0;
-            memset(buff, 0, RFID_BUFF_SIZE);
         } 
         else {
             ble.waitForEvent();        
