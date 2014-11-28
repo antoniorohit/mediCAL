@@ -40,7 +40,6 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // to motor port #2 (M3 and M4)
 Adafruit_StepperMotor *bigMotor = AFMS.getStepper(200, 2);
 
-
 void setup() {
   pinMode(in1Pin, OUTPUT);
   pinMode(in2Pin, OUTPUT);
@@ -49,7 +48,7 @@ void setup() {
   
   Serial.begin(115200);
   smallMotor.setSpeed(30);
-  bigMotor->setSpeed(40);  // 40 rpm   
+  bigMotor->setSpeed(100);  // 100 rpm   
 
   AFMS.begin();            // create with the default frequency 1.6KHz
 
@@ -88,15 +87,15 @@ void loop()
   if (success) {
     //nfc.PrintHex(uid, uidLength);  // print it on serial
     for(int i=0; i< uidLength; i++){
+//      Serial.write('|');
       Serial.write(char(uid[i]));      
     }
-    
-    Serial.write(';');
     if(uidLength < 7){
       Serial.write(0);
       Serial.write(0);
       Serial.write(0);
     }
+    Serial.write(';');
   }
 
 
@@ -112,10 +111,10 @@ void loop()
       Serial.println("BM: Single coil steps");
       jerkMotor(bigMotor);
       if(steps > 0){
-        bigMotor->step(steps, FORWARD, INTERLEAVE); 
+        bigMotor->step(steps, FORWARD, DOUBLE); 
       }
       else{
-        bigMotor->step(-steps, BACKWARD, INTERLEAVE); 
+        bigMotor->step(-steps, BACKWARD, DOUBLE); 
       }
 
     }
@@ -138,19 +137,19 @@ boolean isEqual(uint8_t *ID1, uint8_t *ID2, uint8_t length)
 void jerkMotor(Adafruit_StepperMotor *motor)
 {
   int steps = 4;
+  motor->setSpeed(50);  // 100 rpm   
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
+  motor->step(steps, FORWARD, DOUBLE); 
+  motor->step(steps, BACKWARD, DOUBLE);
   motor->setSpeed(100);  // 100 rpm   
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->setSpeed(40);  // 50 rpm   
 }
 
