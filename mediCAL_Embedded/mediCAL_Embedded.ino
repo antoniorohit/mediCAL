@@ -88,15 +88,15 @@ void loop()
   if (success) {
     //nfc.PrintHex(uid, uidLength);  // print it on serial
     for(int i=0; i< uidLength; i++){
-//      Serial.write('|');
       Serial.write(char(uid[i]));      
     }
+    
+    Serial.write(';');
     if(uidLength < 7){
       Serial.write(0);
       Serial.write(0);
       Serial.write(0);
     }
-    Serial.write(';');
   }
 
 
