@@ -10,7 +10,7 @@ This project is being developed as a part of the Interactive Device Design (Fall
   * Send RFID tag over serial to BLE device
   * Listen over serial to determine what pill to dispense
   * Based on pill/funnel number, move 2 stepper motors to appropriate positions
-  Hardware: Arduino UNO, PN532 NFC reader, L293D H-bridge motor driver, 74HC4050 level shifter and the Adafruit motor shield v2. This project is uses Adafruit's MiFare Arduino library/example and stepper code from here (https://learn.adafruit.com/adafruit-arduino-lesson-16-stepper-motors?view=all)
+ Hardware: Arduino UNO, PN532 NFC reader, L293D H-bridge motor driver, 74HC4050 level shifter and the Adafruit motor shield v2. This project is uses Adafruit's MiFare Arduino library/example and stepper code from here (https://learn.adafruit.com/adafruit-arduino-lesson-16-stepper-motors?view=all)
 
 - BLE code is in the BLE_Medical folder: The BLE chip used is the nRF51822. The project is based on Ben Zhang's BLE_API_DEMO mBED project (https://developer.mbed.org/users/nebgnahz/code/BLE_API_DEMO/). This code does the following:
   * Echo RFID tag read from Arduino over BLE
