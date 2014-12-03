@@ -27,10 +27,6 @@ int in2Pin = 11;
 int in3Pin = 10;
 int in4Pin = 9;
 
-// hack pins
-int RFID1 = 6;
-int RFID2 = 7;
-
 Stepper smallMotor(512, in1Pin, in2Pin, in3Pin, in4Pin);  
 
 // Create the motor shield object with the default I2C address
@@ -48,7 +44,7 @@ void setup() {
   
   Serial.begin(115200);
   smallMotor.setSpeed(30);
-  bigMotor->setSpeed(100);  // 100 rpm   
+  bigMotor->setSpeed(50);  // 100 rpm   
 
   AFMS.begin();            // create with the default frequency 1.6KHz
 
@@ -137,19 +133,19 @@ boolean isEqual(uint8_t *ID1, uint8_t *ID2, uint8_t length)
 void jerkMotor(Adafruit_StepperMotor *motor)
 {
   int steps = 4;
+//  motor->setSpeed(50);  // 100 rpm   
+//  motor->step(steps, FORWARD, DOUBLE); 
+//  motor->step(steps, BACKWARD, DOUBLE);
+//  motor->step(steps, FORWARD, DOUBLE); 
+//  motor->step(steps, BACKWARD, DOUBLE);
+//  motor->step(steps, FORWARD, DOUBLE); 
+//  motor->step(steps, BACKWARD, DOUBLE);
+//  motor->step(steps, FORWARD, DOUBLE); 
+//  motor->step(steps, BACKWARD, DOUBLE);
+//  motor->step(steps, FORWARD, DOUBLE); 
+//  motor->step(steps, BACKWARD, DOUBLE);
+//  motor->step(steps, FORWARD, DOUBLE); 
+//  motor->step(steps, BACKWARD, DOUBLE);
   motor->setSpeed(50);  // 100 rpm   
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->step(steps, FORWARD, DOUBLE); 
-  motor->step(steps, BACKWARD, DOUBLE);
-  motor->setSpeed(100);  // 100 rpm   
 }
 
