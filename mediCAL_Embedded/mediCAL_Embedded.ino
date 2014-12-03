@@ -27,6 +27,11 @@ int in2Pin = 11;
 int in3Pin = 10;
 int in4Pin = 9;
 
+// 3 buttons - limit switches for each motor and cup
+int bigMotorSwitch = 6;
+int smallMotorSwitch = 7;
+int cupSwitch = 8;
+
 Stepper smallMotor(512, in1Pin, in2Pin, in3Pin, in4Pin);  
 
 // Create the motor shield object with the default I2C address
@@ -37,16 +42,23 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_StepperMotor *bigMotor = AFMS.getStepper(200, 2);
 
 void setup() {
+  // Small motor pins
   pinMode(in1Pin, OUTPUT);
   pinMode(in2Pin, OUTPUT);
   pinMode(in3Pin, OUTPUT);
   pinMode(in4Pin, OUTPUT);
   
-  Serial.begin(115200);
-  smallMotor.setSpeed(30);
-  bigMotor->setSpeed(50);  // 100 rpm   
+  // switches
+  pinMode(bigMotorSwitch, INPUT);      // sets the digital pin 6 as input
+  pinMode(smallMotorSwitch, INPUT);      // sets the digital pin 7 as input
+  pinMode(cupSwitch, INPUT_PULLUP);      // enable pullup on pin 8
 
-  AFMS.begin();            // create with the default frequency 1.6KHz
+  Serial.begin(115200);
+  smallMotor.setSpeed(20);
+  bigMotor->setSpeed(30);  // 100 rpm   
+
+  AFMS.begin();
+  // create with the default frequency 1.6KHz
 
   nfc.begin();
 
@@ -74,26 +86,26 @@ void loop()
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
   uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
   char readChar;
-  // Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
-  // 'uid' will be populated with the UID, and uidLength will indicate
-  // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
-  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
   
-  /* If a tag is read successfully, send out the UID to the RF board */
-  if (success) {
-    //nfc.PrintHex(uid, uidLength);  // print it on serial
-    for(int i=0; i< uidLength; i++){
-//      Serial.write('|');
-      Serial.write(char(uid[i]));      
+  if(digitalRead(cupSwitch) == 0){
+    // Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
+    // 'uid' will be populated with the UID, and uidLength will indicate
+    // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
+    success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
+    
+    /* If a tag is read successfully, send out the UID to the RF board */
+    if (success) {
+      for(int i=0; i< uidLength; i++){
+        Serial.write(char(uid[i]));      
+      }
+      if(uidLength < 7){
+        Serial.write(0);
+        Serial.write(0);
+        Serial.write(0);
+      }
+      Serial.write(';');
     }
-    if(uidLength < 7){
-      Serial.write(0);
-      Serial.write(0);
-      Serial.write(0);
-    }
-    Serial.write(';');
   }
-
 
   if (Serial.available())
   {
@@ -148,4 +160,6 @@ void jerkMotor(Adafruit_StepperMotor *motor)
 //  motor->step(steps, BACKWARD, DOUBLE);
   motor->setSpeed(50);  // 100 rpm   
 }
+
+
 
