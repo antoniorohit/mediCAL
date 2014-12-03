@@ -26,3 +26,4 @@ Fun links:
 * Prototype 1.1: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/Homework5-mediCAL
 * Prototype 2.0: http://husk.eecs.berkeley.edu/courses/cs294-84-fall14/index.php/P4-MediCAL and http://youtu.be/h3tUMMHZsO4
 * Prototype 2.5: https://www.youtube.com/watch?v=617ZXK32iUA and https://www.youtube.com/watch?v=oQ7gYv67zXA 
+* Prototype 3.0: http://youtu.be/C05JGTd-k-Y
