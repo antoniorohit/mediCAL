@@ -13,6 +13,9 @@
 #define SS   (4)
 #define MISO (5)
 
+#define ONE_REVOLUTION_BIG  200                      // steps per revolution
+#define ONE_REVOLUTION_SMALL  513                      // steps per revolution
+
 Adafruit_PN532 nfc(SCK, MISO, MOSI, SS);  
 
 /* RFID UIDs - known previously */
@@ -28,18 +31,22 @@ int in3Pin = 10;
 int in4Pin = 9;
 
 // 3 buttons - limit switches for each motor and cup
-int bigMotorSwitch = 6;
-int smallMotorSwitch = 7;
+int smallMotorSwitch = 6;
+int bigMotorSwitch = 7;
 int cupSwitch = 8;
 
-Stepper smallMotor(512, in1Pin, in2Pin, in3Pin, in4Pin);  
+Stepper smallMotor(ONE_REVOLUTION_SMALL, in1Pin, in2Pin, in3Pin, in4Pin);  
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
   
-// Connect a stepper motor with 200 steps per revolution (1.8 degree)
+// Connect a stepper motor with 360 steps per revolution (1 degree)
 // to motor port #2 (M3 and M4)
-Adafruit_StepperMotor *bigMotor = AFMS.getStepper(200, 2);
+Adafruit_StepperMotor *bigMotor = AFMS.getStepper(ONE_REVOLUTION_BIG, 2);
+
+// Absolute Motor Positions
+unsigned int currPos_smallMotor = 361;      // initialize with an illegal motor position
+unsigned int currPos_bigMotor = 361;        // initialize with an illegal motor position
 
 void setup() {
   // Small motor pins
@@ -49,9 +56,9 @@ void setup() {
   pinMode(in4Pin, OUTPUT);
   
   // switches
-  pinMode(bigMotorSwitch, INPUT);      // sets the digital pin 6 as input
-  pinMode(smallMotorSwitch, INPUT);      // sets the digital pin 7 as input
-  pinMode(cupSwitch, INPUT_PULLUP);      // enable pullup on pin 8
+  pinMode(bigMotorSwitch, INPUT_PULLUP);     // sets the digital pin 6 as input
+  pinMode(smallMotorSwitch, INPUT_PULLUP);   // sets the digital pin 7 as input
+  pinMode(cupSwitch, INPUT_PULLUP);          // enable pullup on pin 8
 
   Serial.begin(115200);
   smallMotor.setSpeed(20);
@@ -76,7 +83,8 @@ void setup() {
   // configure board to read RFID tags
   nfc.SAMConfig();
   Serial.print("Success");
-
+  callibrateSmallMotor();
+  callibrateBigMotor();
 }
 
 
@@ -86,6 +94,7 @@ void loop()
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
   uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
   char readChar;
+  
   
   if(digitalRead(cupSwitch) == 0){
     // Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
@@ -112,19 +121,32 @@ void loop()
     int steps = Serial.parseInt();
     readChar = Serial.read();
     if(readChar == 'm'){
-      Serial.println("SM: Normal steps");
       smallMotor.step(steps);
+      Serial.print("SM Curr Pos: ");
+      if(currPos_smallMotor + steps < 0){
+        currPos_smallMotor = (currPos_smallMotor + steps + ONE_REVOLUTION_SMALL);
+      }
+      else{
+        currPos_smallMotor = (currPos_smallMotor + steps)%ONE_REVOLUTION_SMALL;
+      }
+      Serial.print(currPos_smallMotor, DEC);
+      Serial.println();
+      if(currPos_smallMotor == 0)
+          callibrateSmallMotor();
     }
     else if(readChar == 'M'){
-      Serial.println("BM: Single coil steps");
       jerkMotor(bigMotor);
       if(steps > 0){
         bigMotor->step(steps, FORWARD, DOUBLE); 
+        currPos_bigMotor = (currPos_bigMotor+steps)%ONE_REVOLUTION_BIG;
       }
       else{
         bigMotor->step(-steps, BACKWARD, DOUBLE); 
+        currPos_bigMotor = ((currPos_bigMotor-steps) > 0 ? (currPos_bigMotor-steps)%ONE_REVOLUTION_BIG : ONE_REVOLUTION_BIG + (currPos_bigMotor-steps)%ONE_REVOLUTION_BIG);        
       }
-
+      Serial.print("BM Curr Pos: ");
+      Serial.print(currPos_bigMotor*360/ONE_REVOLUTION_BIG, DEC);
+      Serial.println();
     }
   }
 }
@@ -158,8 +180,57 @@ void jerkMotor(Adafruit_StepperMotor *motor)
 //  motor->step(steps, BACKWARD, DOUBLE);
 //  motor->step(steps, FORWARD, DOUBLE); 
 //  motor->step(steps, BACKWARD, DOUBLE);
-  motor->setSpeed(50);  // 100 rpm   
+  motor->setSpeed(30);  // 100 rpm   
 }
 
+// Callibrate Small Motor by turning until the limit switch is hit
+void callibrateSmallMotor()
+{
+  int i = 0;
+
+  smallMotor.setSpeed(10);
+  while(digitalRead(smallMotorSwitch))
+  {
+    smallMotor.step(-2);
+    i--;
+    if(i < -ONE_REVOLUTION_SMALL/24){
+        smallMotor.step(10);  // Compensation turn
+        break;
+    }  // more than 30 deg
+  }
+  smallMotor.step(10);  // Compensation turn
+  while(digitalRead(smallMotorSwitch))
+  {
+    smallMotor.step(2);
+    i++;
+    if(i > ONE_REVOLUTION_SMALL/2){
+      break;  // more than 1 revolution
+    }
+  }
+  
+  smallMotor.step(-10);  // Compensation turn
+
+  Serial.write("\n\rSmall motor callibrated\n\r");
+  smallMotor.setSpeed(30);
+  currPos_smallMotor = 0;
+}
+
+void callibrateBigMotor()
+{
+  int i = 0;
+  bigMotor->setSpeed(10);
+  while(digitalRead(bigMotorSwitch))
+  {
+    bigMotor->step(2, FORWARD, DOUBLE);
+    i++;
+    if(i > ONE_REVOLUTION_BIG)  break;  // more than 2 revolutions
+  }
+  
+  bigMotor->step(ONE_REVOLUTION_BIG/8, BACKWARD, DOUBLE);    // Rest position of the funnel is 45 degrees off the limit switch
+
+  Serial.write("\n\rBig motor callibrated\n\r");
+  bigMotor->setSpeed(30);
+  currPos_bigMotor = 0;
+}
 
 
