@@ -45,8 +45,8 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_StepperMotor *bigMotor = AFMS.getStepper(ONE_REVOLUTION_BIG, 2);
 
 // Absolute Motor Positions
-unsigned int currPos_smallMotor = 361;      // initialize with an illegal motor position
-unsigned int currPos_bigMotor = 361;        // initialize with an illegal motor position
+int currPos_smallMotor = 361;      // initialize with an illegal motor position
+int currPos_bigMotor = 361;        // initialize with an illegal motor position
 
 void setup() {
   // Small motor pins
@@ -131,8 +131,9 @@ void loop()
       }
       Serial.print(currPos_smallMotor, DEC);
       Serial.println();
-      if(currPos_smallMotor == 0)
+      if((currPos_smallMotor == 0) || (currPos_smallMotor == 512) || (currPos_smallMotor == 1)){
           callibrateSmallMotor();
+      }
     }
     else if(readChar == 'M'){
       jerkMotor(bigMotor);
@@ -142,10 +143,20 @@ void loop()
       }
       else{
         bigMotor->step(-steps, BACKWARD, DOUBLE); 
-        currPos_bigMotor = ((currPos_bigMotor-steps) > 0 ? (currPos_bigMotor-steps)%ONE_REVOLUTION_BIG : ONE_REVOLUTION_BIG + (currPos_bigMotor-steps)%ONE_REVOLUTION_BIG);        
+        if(currPos_bigMotor + steps > 0){
+          currPos_bigMotor = (currPos_bigMotor + steps);
+        }
+         else{
+           currPos_bigMotor = (currPos_bigMotor + steps + ONE_REVOLUTION_BIG)%ONE_REVOLUTION_BIG;
+         }        
+    }
+
+      if(currPos_bigMotor == 0){
+//        callibrateBigMotor();  
       }
+      
       Serial.print("BM Curr Pos: ");
-      Serial.print(currPos_bigMotor*360/ONE_REVOLUTION_BIG, DEC);
+      Serial.print(currPos_bigMotor, DEC);
       Serial.println();
     }
   }
@@ -188,7 +199,7 @@ void callibrateSmallMotor()
 {
   int i = 0;
 
-  smallMotor.setSpeed(10);
+  smallMotor.setSpeed(30);
   while(digitalRead(smallMotorSwitch))
   {
     smallMotor.step(-2);
@@ -210,7 +221,7 @@ void callibrateSmallMotor()
   
   smallMotor.step(-10);  // Compensation turn
 
-  Serial.write("\n\rSmall motor callibrated\n\r");
+  Serial.write("\n\rSmall motor callibrated");
   smallMotor.setSpeed(30);
   currPos_smallMotor = 0;
 }
@@ -218,7 +229,7 @@ void callibrateSmallMotor()
 void callibrateBigMotor()
 {
   int i = 0;
-  bigMotor->setSpeed(10);
+  bigMotor->setSpeed(30);
   while(digitalRead(bigMotorSwitch))
   {
     bigMotor->step(2, FORWARD, DOUBLE);
@@ -228,7 +239,7 @@ void callibrateBigMotor()
   
   bigMotor->step(ONE_REVOLUTION_BIG/8, BACKWARD, DOUBLE);    // Rest position of the funnel is 45 degrees off the limit switch
 
-  Serial.write("\n\rBig motor callibrated\n\r");
+  Serial.write("\n\rBig motor callibrated");
   bigMotor->setSpeed(30);
   currPos_bigMotor = 0;
 }
