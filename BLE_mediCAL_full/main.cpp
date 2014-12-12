@@ -36,6 +36,11 @@ static volatile uint16_t chooseFunnel_handler;        // handler for input data 
 static volatile bool is_button_pressed = false;
 static volatile bool uid_read = false;
 
+char read_ch;                                   // temp var to store data from arduino
+uint8_t buff[RFID_BUFF_SIZE] = {0};             // max packet size for GATT is 20 bytes
+uint8_t ct = 0;
+uint8_t turns_ct = 0;
+
 // What happens on connect event - DEBUG purposes ONLY!!
 void onConnection(Gap::Handle_t handle, const Gap::ConnectionParams_t * param_ptr){
     arduino.printf("Connection Event!\n\r");
@@ -63,22 +68,28 @@ void onDatawritten(const GattCharacteristicWriteCBParams *eventDataP) {
 //140m small to large
 
             case 0:
+                arduino.printf("%dM", -turns_ct*ONE_REVOLUTION_BIG/8);             // move funnel near hole                
+                turns_ct = 0;
                 arduino.printf("%dM", ONE_REVOLUTION_BIG/2);             // move funnel near hole
-                arduino.printf("%dm", ONE_REVOLUTION_SMALL/2);           // expose pill hole   
+                arduino.printf("%dm", ONE_REVOLUTION_SMALL/2+10);           // expose pill hole   
                 arduino.printf("%dM", ONE_REVOLUTION_BIG/4);             // move funnel across hole
-                arduino.printf("%dm", ONE_REVOLUTION_SMALL/2);           // move pill hole to dispense     
+                arduino.printf("%dm", ONE_REVOLUTION_SMALL/2-10);           // move pill hole to dispense     
                 arduino.printf("%dM", ONE_REVOLUTION_BIG/4);             // move funnel to original pos
                 break;
             case 1:
+                arduino.printf("%dM", -turns_ct*ONE_REVOLUTION_BIG/8);             // move funnel near hole                
+                turns_ct = 0;
                 arduino.printf("%dM", ONE_REVOLUTION_BIG/4);             // move funnel near hole
-                arduino.printf("%dm", ONE_REVOLUTION_SMALL/2);           // expose pill hole   
+                arduino.printf("%dm", ONE_REVOLUTION_SMALL/2+10);           // expose pill hole   
                 arduino.printf("%dM", ONE_REVOLUTION_BIG/4);             // move funnel across hole
-                arduino.printf("%dm", ONE_REVOLUTION_SMALL/2);           // move pill hole to dispense     
+                arduino.printf("%dm", ONE_REVOLUTION_SMALL/2-10);           // move pill hole to dispense     
                 arduino.printf("%dm", -ONE_REVOLUTION_SMALL/2);          // move hole back      
                 arduino.printf("%dm", -ONE_REVOLUTION_SMALL/2);          // move hole to original position
                 arduino.printf("%dM", ONE_REVOLUTION_BIG/2);             // move funnel to back              
                 break;        
             case 2:
+                arduino.printf("%dM", -turns_ct*ONE_REVOLUTION_BIG/8);             // move funnel near hole                
+                turns_ct = 0;
                 arduino.printf("%dM", 0);                                // move funnel near hole
                 arduino.printf("%dm", -70);                              // expose huge pill hole   
                 arduino.printf("%dM", ONE_REVOLUTION_BIG/4);             // move funnel across hole
@@ -88,26 +99,27 @@ void onDatawritten(const GattCharacteristicWriteCBParams *eventDataP) {
                 break;      
             
             case 3:
+                arduino.printf("%dM", -turns_ct*ONE_REVOLUTION_BIG/8);             // move funnel near hole                
+                turns_ct = 0;
                 arduino.printf("%dM", 0);                                // move funnel near hole
-                arduino.printf("%dm", -70);                              // expose huge pill hole   
+                arduino.printf("%dm", 85);                              // expose huge pill hole   
                 arduino.printf("%dM", -ONE_REVOLUTION_BIG/4);             // move funnel across hole
                 arduino.printf("%dm", ONE_REVOLUTION_SMALL/2);           // move pill hole to dispense     
-                arduino.printf("%dm", -ONE_REVOLUTION_SMALL/2 + 70);     // move hole to original position
+                arduino.printf("%dm", -ONE_REVOLUTION_SMALL/2 - 85);     // move hole to original position
                 arduino.printf("%dM", +ONE_REVOLUTION_BIG/4);             // move funnel to back              
                 break;      
               
                 break;      
 
             default:
+                arduino.printf("%dM", ONE_REVOLUTION_BIG/8);             // move funnel for loading?
+                turns_ct++;
                 break;    
             }
 
         led1 = !led1.read();                                    // debug purposes
     }
 }
-char read_ch;                                   // temp var to store data from arduino
-uint8_t buff[RFID_BUFF_SIZE] = {0};             // max packet size for GATT is 20 bytes
-uint8_t ct = 0;
 
 void callback() {
     // Note: you need to actually read from the serial to clear the RX interrupt
