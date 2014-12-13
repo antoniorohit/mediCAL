@@ -16,8 +16,8 @@
 #define ONE_REVOLUTION_BIG  200                      // steps per revolution
 #define ONE_REVOLUTION_SMALL  513                      // steps per revolution
 
-#define SMALL_MOTOR_SPEED    20
-#define BIG_MOTOR_SPEED      20
+#define SMALL_MOTOR_SPEED    30
+#define BIG_MOTOR_SPEED      30
 
 Adafruit_PN532 nfc(SCK, MISO, MOSI, SS);  
 
